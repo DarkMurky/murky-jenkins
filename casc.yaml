@@ -1,0 +1,35 @@
+jenkins:
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+       - id: ${JENKINS_ADMIN_ID}
+         password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "USER:Overall/Administer:admin"
+        - "GROUP:Overall/Read:authenticated"
+  remotingSecurity:
+    enabled: true
+
+  nodes:
+    - permanent:
+        name: "static-agent"
+        remoteFS: "/home/jenkins"
+        launcher:
+          inbound:
+            workDirSettings:
+              disabled: true
+              failIfWorkDirIsMissing: false
+              internalDir: "remoting"
+              workDirPath: "/tmp"
+
+  slaveAgentPort: 50000
+
+
+security:
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
