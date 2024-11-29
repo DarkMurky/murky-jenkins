@@ -3,8 +3,8 @@ jenkins:
     local:
       allowsSignup: false
       users:
-       - id: ${JENKINS_ADMIN_ID}
-         password: ${JENKINS_ADMIN_PASSWORD}
+        - id: ${JENKINS_ADMIN_ID}
+          password: ${JENKINS_ADMIN_PASSWORD}
   authorizationStrategy:
     globalMatrix:
       permissions:
@@ -13,23 +13,82 @@ jenkins:
   remotingSecurity:
     enabled: true
 
-  nodes:
-    - permanent:
-        name: "static-agent"
-        remoteFS: "/home/jenkins"
-        launcher:
-          inbound:
-            workDirSettings:
-              disabled: true
-              failIfWorkDirIsMissing: false
-              internalDir: "remoting"
-              workDirPath: "/tmp"
-
-  slaveAgentPort: 50000
-
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: github-jenkins
+              username: ${JENKINS_ADMIN_ID}
+              description: "SSH passphrase with private key file"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${SSH_PRIVATE_KEY}"
+          - string:
+              scope: GLOBAL
+              id: github-jenkins-access-token
+              description: "GitHub access token for Jenkins"
+              secret: "${GITHUB_ACCESS_TOKEN}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: dockerhub
+              description: dockerhub login access for Jenkins
+              username: "${DOCKER_USERNAME}"
+              password: "${DOCKER_PASSWORD"
+              usernameSecret: true
+jobs:
+  - script: >
+      pipelineJob('arr-media-server-dev') {
+        definition {
+          cpsScm {
+            lightweight(true)
+            scm {
+              git {
+                remote {
+                  url("https://github.com/DarkMurky/arr-media-server.git")
+                  credentials("github-jenkins")
+                }
+                branch("*/dev")
+              }
+            }
+            triggers {
+              githubPush()
+            }
+            scriptPath("Jenkinsfile")
+          }
+        }
+        parameters {
+          stringParam('environment', 'dev', 'environment')
+        }
+      }
+  - script: >
+      pipelineJob('arr-media-server-prod') {
+        definition {
+          cpsScm {
+            lightweight(true)
+            scm {
+              git {
+                remote {
+                  url("https://github.com/DarkMurky/arr-media-server.git")
+                  credentials("github-jenkins")
+                }
+                branch("*/main")
+              }
+            }
+            triggers {
+              githubPush()
+            }
+            scriptPath("Jenkinsfile")
+          }
+        }
+        parameters {
+          stringParam('environment', 'prod', 'environment')
+        }
+      }
 
 security:
   queueItemAuthenticator:
     authenticators:
-    - global:
-        strategy: triggeringUsersAuthorizationStrategy
+      - global:
+          strategy: triggeringUsersAuthorizationStrategy
