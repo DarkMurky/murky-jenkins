@@ -39,31 +39,7 @@ credentials:
               usernameSecret: true
 jobs:
   - script: >
-      pipelineJob('arr-media-server-dev') {
-        definition {
-          cpsScm {
-            lightweight(true)
-            scm {
-              git {
-                remote {
-                  url("https://github.com/DarkMurky/arr-media-server.git")
-                  credentials("github-jenkins")
-                }
-                branch("*/dev")
-              }
-            }
-            triggers {
-              githubPush()
-            }
-            scriptPath("Jenkinsfile")
-          }
-        }
-        parameters {
-          stringParam('environment', 'dev', 'environment')
-        }
-      }
-  - script: >
-      pipelineJob('arr-media-server-prod') {
+      pipelineJob('arr-media-server') {
         definition {
           cpsScm {
             lightweight(true)
@@ -83,7 +59,7 @@ jobs:
           }
         }
         parameters {
-          stringParam('environment', 'prod', 'environment')
+          stringParam('environment', 'latest', 'environment')
         }
       }
 
